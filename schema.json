@@ -99,6 +99,16 @@
                 "type": "string"
               },
               "description": "Names of spatial dimensions [y_name, x_name]"
+            },
+            "shape": {
+              "type": ["array", "null"],
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "description": "Shape of spatial dimensions [height, width] corresponding to [y, x]"
             }
           },
           "oneOf": [

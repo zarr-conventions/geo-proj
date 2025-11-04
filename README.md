@@ -13,7 +13,10 @@
 This specification defines a JSON object that encodes datum and coordinate reference system (CRS) information for geospatial data. Additionally, this specification defines a convention for storing this object under the `proj` key within the `geo` dictionary in the attributes of Zarr groups or arrays.
 
 - Examples:
-    - [gdal-test-case](examples/zarr_convention_metadata.json)
+    - [EPSG:3857](examples/epsg3587.json)
+    - [EPSG:26711](examples/epsg26711.json)
+    - [WKT2](examples/wkt2.json)
+    - [Group-level with shape](examples/group-level-shape.json)
 
 ## Motivation
 
@@ -36,6 +39,7 @@ The configuration in the Zarr convention metadata can be used in these parts of 
 |**bbox**|`number` `[]`|Bounding box in CRS coordinates|No|[geo -> bbox](#bbox)|
 |**transform**|`number` `[]`|Affine transformation coefficients|No|[geo -> transform](#transform)|
 |**spatial_dimensions**|`string` `[2]`|Names of spatial dimensions [y_name, x_name]|&#10003; Yes|[geo -> spatial_dimensions](#spatial_dimensions)|
+|**shape**|`integer` `[2]`|Shape of spatial dimensions [height, width]|No|[geo -> shape](#shape)|
 
 
 ### Field Details
@@ -162,7 +166,30 @@ Names of spatial dimensions [y_name, x_name]
 
 See the [Spatial Dimension Identification](#spatial-dimension-identification) section below for details on how spatial dimensions are identified.
 
-Note: The shape of spatial dimensions is obtained directly from the Zarr array metadata once the spatial dimensions are identified.
+Note: When `geo:proj` is used at the array level, the shape of spatial dimensions is obtained directly from the Zarr array metadata once the spatial dimensions are identified. When used at the group level, the `shape` attribute can be used to specify the spatial dimensions shape.
+
+#### shape
+
+Shape of spatial dimensions [height, width]
+
+* **Type**: `[integer [2], null]`
+* **Required**: No
+
+The shape of the spatial dimensions in `[height, width]` order, corresponding to the `[y, x]` dimensions specified in `spatial_dimensions`. This field is particularly useful when `geo:proj` is used at the group level, as it allows for calculating the bounding box from the `transform` without needing to access the underlying array data.
+
+This field SHOULD be set when:
+
+- `geo:proj` is used at the group level and represents spatial data with a fixed grid
+- The `transform` is provided but `bbox` is not
+- All arrays in the group share the same spatial dimensions and shape
+
+This field MAY be omitted when:
+
+- `geo:proj` is used at the array level (shape can be obtained from array metadata)
+- The `bbox` is already provided
+- The group contains arrays with different spatial shapes
+
+> [!Note] If both `shape` and `bbox` are provided, they should be consistent with each other given the specified `transform`.
 
 ## Acknowledgements
 
