@@ -23,6 +23,16 @@ This convention defines properties that encode datum and coordinate reference sy
 - Based on the proven STAC Projection Extension model
 - Enables composability - can extend other conventions like multiscales with projection-specific properties
 
+## Inheritance Model
+
+The `geo-proj` convention object follows a simple group-to-array inheritance model that should be understood first:
+
+### Inheritance Rules
+
+1. **Group-level definition** (recommended): When `geo-proj` convention is defined at the group level, it applies to all arrays that are direct children of that group. It does not apply to groups or arrays deeper in the hierarchy (e.g., grandchildren).
+2. **Array-level override**: An array can completely override the group's `geo-proj` convention with its own definition.
+3. **Partial replacement**: Partial inheritance (overriding only some fields while inheriting others) is allowed.
+
 ## Convention Registration
 
 The convention must be registered in `zarr_conventions`:
@@ -253,6 +263,56 @@ In this example:
 - This enables efficient storage of multi-resolution geospatial data with proper georeferencing at each level
 
 See [examples/easy.json](examples/easy.json) for a complete composability example.
+
+## FAQ
+
+### Why does the "geo-proj" convention allow inheritance from a group to direct child arrays?
+
+The inheritance model addresses a fundamental pattern in geospatial data organization: multiple arrays (e.g., different bands, variables, or time steps) often share the same coordinate reference system and spatial grid. By defining `geo:proj` at the group level, users can:
+
+1. **Reduce redundancy**: Avoid duplicating identical CRS metadata across multiple arrays
+2. **Ensure consistency**: Guarantee that all related arrays use the same projection definition
+3. **Simplify management**: Update projection metadata in one location rather than across many arrays
+4. **Match common practice**: Align with how geospatial tools like GDAL organize multi-band rasters and how formats like NetCDF/HDF5 structure data
+
+This pattern is especially valuable for satellite imagery, climate models, and other geospatial datasets where dozens or hundreds of arrays share identical spatial properties.
+
+### Why does the "geo-proj" convention not support multi-level inheritance (e.g., from a group to grand-child arrays)?
+
+Limiting inheritance to direct children keeps the convention simple and predictable:
+
+1. **Clear scope**: Users can immediately understand which arrays inherit projection metadata by looking at the group's direct children
+2. **Avoid ambiguity**: Multi-level inheritance would require complex rules for handling intermediate groups that may or may not define their own projections
+3. **Explicit organization**: Zarr hierarchies can be arbitrarily deep; limiting inheritance to one level encourages intentional data organization
+4. **Implementation simplicity**: Parsers only need to check one level up, not traverse the entire hierarchy
+
+If nested groups need the same projection, users can either:
+- Define `geo:proj` at each group level where needed (e.g. multiscale datasets)
+- Restructure their hierarchy to keep related arrays as direct children of a common parent
+
+### Why does the "geo-proj" convention support child arrays overriding parent group "geo-proj" definitions?
+
+Array-level overrides provide necessary flexibility for real-world use cases:
+
+1. **Subsets and crops**: An array might represent a spatial subset with different bounds or transform than the group default
+2. **Multi-resolution data**: Different resolution arrays may have different transforms while sharing the same CRS code
+3. **Legacy data migration**: When importing data, some arrays might have unique projection properties that need preservation
+
+Without override capability, users would be forced to create separate groups for each variation, leading to unnecessarily fragmented hierarchies.
+
+### Why does the "geo-proj" convention support partial overrides?
+
+Partial inheritance (where arrays can override specific fields while inheriting others) provides fine-grained control:
+
+1. **Field independence**: Different fields serve different purposes - an array might share the `code` but have a unique `transform` or `bbox`
+2. **Common scenarios**: 
+   - Multiple arrays in the same CRS (`code`) but with different spatial extents (`bbox`)
+   - Arrays with identical transforms but different bounding boxes
+   - Subsampled data sharing the CRS but with modified transform coefficients
+3. **Efficiency**: Users only specify what's different, reducing verbosity and maintenance burden
+4. **Backward compatibility**: New optional fields can be added without requiring full redefinition
+
+This design follows the principle of "declare what's different, inherit what's common," making the convention more practical for real geospatial workflows.
 
 ## Acknowledgements
 
