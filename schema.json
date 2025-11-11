@@ -127,15 +127,16 @@
       "additionalProperties": true
     }
   },
+  "required": ["proj:spatial_dimensions"],
   "oneOf": [
     {
-      "required": ["proj:code", "proj:spatial_dimensions"]
+      "required": ["proj:code"]
     },
     {
-      "required": ["proj:wkt2", "proj:spatial_dimensions"]
+      "required": ["proj:wkt2"]
     },
     {
-      "required": ["proj:projjson", "proj:spatial_dimensions"]
+      "required": ["proj:projjson"]
     }
   ],
   "additionalProperties": true
