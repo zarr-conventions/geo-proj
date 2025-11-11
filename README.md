@@ -1,48 +1,89 @@
 # Geospatial Projection Attribute Extension for Zarr
 
 - **UUID**: f17cb550-5864-4468-aeb7-f3180cfb622f
-- **Name**: geo:proj
-- **Schema**: "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v0.1.0/schema.json"
+- **Name**: geo-proj
+- **Namespace**: `proj:`
+- **Schema**: <https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v0.1.0/schema.json>
 - **Extension Maturity Classification**: Proposal
 - **Owner**: @emmanuelmathot, @maxrjones
-- **Version** 0.1.0
+- **Version**: 0.1.0
 
 
 ## Description
 
-This specification defines a JSON object that encodes datum and coordinate reference system (CRS) information for geospatial data. Additionally, this specification defines a convention for storing this object under the `proj` key within the `geo` dictionary in the attributes of Zarr groups or arrays.
+This convention defines properties that encode datum and coordinate reference system (CRS) information for geospatial data. All properties use the `proj:` namespace prefix and are placed at the root `attributes` level following the [Zarr Conventions Specification v0.1.0](https://github.com/zarr-conventions/zarr-conventions-spec). This enables composability with other conventions such as multiscales.
 
 - Examples:
-    - [gdal-test-case](examples/zarr_convention_metadata.json)
+    - [EPSG:26711](examples/epsg26711.json)
+    - [EPSG:3857](examples/epsg3587.json)
+    - [wkt2](examples/wkt2.json)
+    - [composition with multiscales](examples/multiscales.json)
 
 ## Motivation
 
 - Provides simple, standardized CRS encoding without complex nested structures
 - Compatible with existing geospatial tools (GDAL, rasterio, pyproj)
 - Based on the proven STAC Projection Extension model
+- Enables composability - can extend other conventions like multiscales with projection-specific properties
 
-## Configuration
+## Inheritance Model
 
-The configuration in the Zarr convention metadata can be used in these parts of the Zarr hierarchy:
+The `geo-proj` convention object follows a simple group-to-array inheritance model that should be understood first:
+
+### Inheritance Rules
+
+1. **Group-level definition** (recommended): When `geo-proj` convention is defined at the group level, it applies to all arrays that are direct children of that group. It does not apply to groups or arrays deeper in the hierarchy (e.g., grandchildren).
+2. **Array-level override**: An array can completely override the group's `geo-proj` convention with its own definition.
+3. **Partial replacement**: Partial inheritance (overriding only some fields while inheriting others) is allowed.
+
+## Convention Registration
+
+The convention must be registered in `zarr_conventions`:
+
+```json
+{
+  "zarr_conventions_version": "0.1.0",
+  "zarr_conventions": {
+    "f17cb550-5864-4468-aeb7-f3180cfb622f": {
+      "version": "0.1.0",
+      "schema": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v0.1.0/schema.json",
+      "name": "geo-proj",
+      "description": "Coordinate reference system information for geospatial data",
+      "spec": "https://github.com/zarr-experimental/geo-proj/blob/v0.1.0/README.md"
+    }
+  }
+}
+```
+
+## Applicable To
+
+This convention can be used with these parts of the Zarr hierarchy:
 
 - [x] Group
 - [x] Array
 
-|   |Type|Description|Required|Reference|
+## Properties
+
+All properties use the `proj:` namespace prefix and are placed at the root `attributes` level.
+
+|Property|Type|Description|Required|Reference|
 |---|---|---|---|---|
-|**code**|`["string", "null"]`|Authority:code identifier (e.g., EPSG:4326)|No|[code](#code)|
-|**wkt2**|`["string", "null"]`|WKT2 (ISO 19162) CRS representation|No|[geo -> wkt2](#wkt2)|
-|**projjson**|`any`|PROJJSON CRS representation|No|[geo -> projjson](#projjson)|
-|**bbox**|`number` `[]`|Bounding box in CRS coordinates|No|[geo -> bbox](#bbox)|
-|**transform**|`number` `[]`|Affine transformation coefficients|No|[geo -> transform](#transform)|
-|**spatial_dimensions**|`string` `[2]`|Names of spatial dimensions [y_name, x_name]|&#10003; Yes|[geo -> spatial_dimensions](#spatial_dimensions)|
+|**proj:code**|`string`|Authority:code identifier (e.g., EPSG:4326)|Conditional*|[proj:code](#projcode)|
+|**proj:wkt2**|`string`|WKT2 (ISO 19162) CRS representation|Conditional*|[proj:wkt2](#projwkt2)|
+|**proj:projjson**|`object`|PROJJSON CRS representation|Conditional*|[proj:projjson](#projprojjson)|
+|**proj:spatial_dimensions**|`string[]`|Names of spatial dimensions [y_name, x_name]|Yes|[proj:spatial_dimensions](#projspatialdimensions)|
+|**proj:bbox**|`number[]`|Bounding box in CRS coordinates|No|[proj:bbox](#projbbox)|
+|**proj:transform**|`number[]`|Affine transformation coefficients|No|[proj:transform](#projtransform)|
+|**proj:shape**|`number[]`|Shape of spatial dimensions [height, width]|No|[proj:shape](#projshape)|
+
+\* At least one of `proj:code`, `proj:wkt2`, or `proj:projjson` MUST be provided, and `proj:spatial_dimensions` is always required.
 
 
 ### Field Details
 
-Additional properties are allowed. 
+Additional properties are allowed.
 
-#### code
+#### proj:code
 
 Authority:code identifier (e.g., EPSG:4326)
 
@@ -62,16 +103,16 @@ clients are likely to support are listed in the following table.
 | Open Geospatial Consortium (OGC)        | <http://www.opengis.net/def/crs/OGC>                       |
 | ESRI                                    | <https://spatialreference.org/ref/esri/>                   |
 
-The `code` field SHOULD be set to `null` or omitted in the following cases:
+The `proj:code` field SHOULD be set to `null` or omitted in the following cases:
 
 - The data does not have a CRS, such as in the case of non-rectified imagery with Ground Control Points.
-- A CRS exists, but there is no valid EPSG code for it. In this case, the CRS should be provided in `wkt2` and/or `projjson`.
+- A CRS exists, but there is no valid EPSG code for it. In this case, the CRS should be provided in `proj:wkt2` and/or `proj:projjson`.
 
 Clients can prefer to take either, although there may be discrepancies in how each might be interpreted.
 
-The `code` field MUST NOT be set to `null` or unset if both the `wkt2` field or `projjson` fields are set to `null` or unset.
+At least one of `proj:code`, `proj:wkt2`, or `proj:projjson` MUST be provided.
 
-#### wkt2
+#### proj:wkt2
 
 WKT2 (ISO 19162) CRS representation
 
@@ -86,9 +127,9 @@ This field SHOULD be set to `null` or omitted in the following cases:
 - The asset data does not have a CRS, such as in the case of non-rectified imagery with Ground Control Points.
 - A CRS exists, but there is no valid WKT2 string for it.
 
-The `wkt2` field MUST NOT be set to `null` or unset if both the `code` field or `projjson` fields are set to `null` or unset.
+At least one of `proj:code`, `proj:wkt2`, or `proj:projjson` MUST be provided.
 
-#### projjson
+#### proj:projjson
 
 PROJJSON CRS representation
 
@@ -104,9 +145,9 @@ This field SHOULD be set to `null` or omitted in the following cases:
 - The asset data does not have a CRS, such as in the case of non-rectified imagery with Ground Control Points.
 - A CRS exists, but there is no valid PROJJSON for it.
 
-The `projjson` field MUST NOT be set to `null` or unset if both the `code` field or `wkt2` fields are set to `null` or unset.
+At least one of `proj:code`, `proj:wkt2`, or `proj:projjson` MUST be provided.
 
-#### bbox
+#### proj:bbox
 
 Bounding box in CRS coordinates
 
@@ -114,14 +155,14 @@ Bounding box in CRS coordinates
 * **Required**: No
 
 Bounding box of the assets represented by this Item in the asset data CRS. Specified as 4 numbers
-based on the CRS defined in the `code`, `projjson` or `wkt2` fields. The first two numbers are coordinates
-of the lower left corner, followed by coordinates of upper right corner, , e.g., \[west, south, east, north],
+based on the CRS defined in the `proj:code`, `proj:projjson` or `proj:wkt2` fields. The first two numbers are coordinates
+of the lower left corner, followed by coordinates of upper right corner, e.g., \[west, south, east, north],
 \[xmin, ymin, xmax, ymax], \[left, down, right, up], or \[west, south, lowest, east, north, highest].
 The length of the array must be 2\*n where n is the number of dimensions. The array contains all axes of the southwesterly
 most extent followed by all axes of the northeasterly most extent specified in Longitude/Latitude
 based on [WGS 84](http://www.opengis.net/def/crs/OGC/1.3/CRS84).
 
-#### transform
+#### proj:transform
 
 Affine transformation coefficients
 
@@ -153,16 +194,128 @@ proj_transform = [g[1], g[2], g[0],
                      0,    0,    1]
 ```
 
-#### spatial_dimensions
+#### proj:shape
 
-Names of spatial dimensions [y_name, x_name]
+Shape of spatial dimensions [height, width] corresponding to [y, x]
 
-* **Type**: `[string [2], null]`
+* **Type**: `integer[2]`
 * **Required**: No
 
-See the [Spatial Dimension Identification](#spatial-dimension-identification) section below for details on how spatial dimensions are identified.
+Specifies the dimensions of the spatial axes in pixels. When used at the group level with multiscales, this represents the shape of the base (highest resolution) level.
 
-Note: The shape of spatial dimensions is obtained directly from the Zarr array metadata once the spatial dimensions are identified.
+#### proj:spatial_dimensions
+
+Names of spatial dimensions [y_name, x_name] or [z_name, y_name, x_name]
+
+* **Type**: `string[]`
+* **Required**: Yes
+
+Identifies which dimensions in the Zarr array correspond to spatial axes. This is particularly useful when arrays have multiple dimensions (e.g., time, bands, y, x). The array must contain either 2 elements for 2D spatial data [y_name, x_name] or 3 elements for 3D spatial data [z_name, y_name, x_name].
+
+## Examples
+
+### Basic Array Example
+
+See the following examples for different CRS specifications:
+
+- [examples/epsg3587.json](examples/epsg3587.json) - Web Mercator projection with EPSG code
+- [examples/epsg26711.json](examples/epsg26711.json) - UTM projection
+- [examples/wkt2.json](examples/wkt2.json) - CRS defined using WKT2 format
+
+### Composability with Multiscales
+
+The proj: convention can extend multiscales layouts by adding projection-specific properties to individual resolution levels:
+
+```json
+{
+  "zarr_conventions": {
+    "d35379db-88df-4056-af3a-620245f8e347": {
+      "version": "0.1.0",
+      "name": "multiscales"
+    },
+    "f17cb550-5864-4468-aeb7-f3180cfb622f": {
+      "version": "0.1.0",
+      "name": "geo-proj"
+    }
+  },
+  "multiscales": {
+    "layout": [
+      {
+        "group": "r10m",
+        "proj:shape": [1200, 1200],
+        "proj:transform": [10.0, 0.0, 500000.0, 0.0, -10.0, 5000000.0]
+      },
+      {
+        "group": "r20m",
+        "from_group": "r10m",
+        "scale": [2.0, 2.0],
+        "proj:shape": [600, 600],
+        "proj:transform": [20.0, 0.0, 500000.0, 0.0, -20.0, 5000000.0]
+      }
+    ]
+  },
+  "proj:code": "EPSG:32633",
+  "proj:bbox": [500000.0, 4900000.0, 600000.0, 5000000.0]
+}
+```
+
+In this example:
+
+- The group-level `proj:code` and `proj:bbox` apply to all resolution levels
+- Each layout item has its own `proj:shape` and `proj:transform` specific to that resolution
+- This enables efficient storage of multi-resolution geospatial data with proper georeferencing at each level
+
+See [examples/multiscales.json](examples/multiscales.json) for a complete composability example.
+
+## FAQ
+
+### Why does the "geo-proj" convention allow inheritance from a group to direct child arrays?
+
+The inheritance model addresses a fundamental pattern in geospatial data organization: multiple arrays (e.g., different bands, variables, or time steps) often share the same coordinate reference system and spatial grid. By defining `geo:proj` at the group level, users can:
+
+1. **Reduce redundancy**: Avoid duplicating identical CRS metadata across multiple arrays
+2. **Ensure consistency**: Guarantee that all related arrays use the same projection definition
+3. **Simplify management**: Update projection metadata in one location rather than across many arrays
+4. **Match common practice**: Align with how geospatial tools like GDAL organize multi-band rasters and how formats like NetCDF/HDF5 structure data
+
+This pattern is especially valuable for satellite imagery, climate models, and other geospatial datasets where dozens or hundreds of arrays share identical spatial properties.
+
+### Why does the "geo-proj" convention not support multi-level inheritance (e.g., from a group to grand-child arrays)?
+
+Limiting inheritance to direct children keeps the convention simple and predictable:
+
+1. **Clear scope**: Users can immediately understand which arrays inherit projection metadata by looking at the group's direct children
+2. **Avoid ambiguity**: Multi-level inheritance would require complex rules for handling intermediate groups that may or may not define their own projections
+3. **Explicit organization**: Zarr hierarchies can be arbitrarily deep; limiting inheritance to one level encourages intentional data organization
+4. **Implementation simplicity**: Parsers only need to check one level up, not traverse the entire hierarchy
+
+If nested groups need the same projection, users can either:
+- Define `geo:proj` at each group level where needed (e.g. multiscale datasets)
+- Restructure their hierarchy to keep related arrays as direct children of a common parent
+
+### Why does the "geo-proj" convention support child arrays overriding parent group "geo-proj" definitions?
+
+Array-level overrides provide necessary flexibility for real-world use cases:
+
+1. **Subsets and crops**: An array might represent a spatial subset with different bounds or transform than the group default
+2. **Multi-resolution data**: Different resolution arrays may have different transforms while sharing the same CRS code
+3. **Legacy data migration**: When importing data, some arrays might have unique projection properties that need preservation
+
+Without override capability, users would be forced to create separate groups for each variation, leading to unnecessarily fragmented hierarchies.
+
+### Why does the "geo-proj" convention support partial overrides?
+
+Partial inheritance (where arrays can override specific fields while inheriting others) provides fine-grained control:
+
+1. **Field independence**: Different fields serve different purposes - an array might share the `code` but have a unique `transform` or `bbox`
+2. **Common scenarios**: 
+   - Multiple arrays in the same CRS (`code`) but with different spatial extents (`bbox`)
+   - Arrays with identical transforms but different bounding boxes
+   - Subsampled data sharing the CRS but with modified transform coefficients
+3. **Efficiency**: Users only specify what's different, reducing verbosity and maintenance burden
+4. **Backward compatibility**: New optional fields can be added without requiring full redefinition
+
+This design follows the principle of "declare what's different, inherit what's common," making the convention more practical for real geospatial workflows.
 
 ## Acknowledgements
 
