@@ -58,12 +58,12 @@ All properties use the `proj:` namespace prefix and are placed at the root `attr
 |**proj:code**|`string`|Authority:code identifier (e.g., EPSG:4326)|Conditional*|[proj:code](#projcode)|
 |**proj:wkt2**|`string`|WKT2 (ISO 19162) CRS representation|Conditional*|[proj:wkt2](#projwkt2)|
 |**proj:projjson**|`object`|PROJJSON CRS representation|Conditional*|[proj:projjson](#projprojjson)|
+|**proj:spatial_dimensions**|`string[]`|Names of spatial dimensions [y_name, x_name]|Yes|[proj:spatial_dimensions](#projspatialdimensions)|
 |**proj:bbox**|`number[]`|Bounding box in CRS coordinates|No|[proj:bbox](#projbbox)|
 |**proj:transform**|`number[]`|Affine transformation coefficients|No|[proj:transform](#projtransform)|
 |**proj:shape**|`number[]`|Shape of spatial dimensions [height, width]|No|[proj:shape](#projshape)|
-|**proj:spatial_dimensions**|`string[]`|Names of spatial dimensions [y_name, x_name]|No|[proj:spatial_dimensions](#projspatialdimensions)|
 
-\* At least one of `proj:code`, `proj:wkt2`, or `proj:projjson` MUST be provided.
+\* At least one of `proj:code`, `proj:wkt2`, or `proj:projjson` MUST be provided, and `proj:spatial_dimensions` is always required.
 
 
 ### Field Details
@@ -192,12 +192,12 @@ Specifies the dimensions of the spatial axes in pixels. When used at the group l
 
 #### proj:spatial_dimensions
 
-Names of spatial dimensions [y_name, x_name]
+Names of spatial dimensions [y_name, x_name] or [z_name, y_name, x_name]
 
-* **Type**: `[string [2], null]`
-* **Required**: No
+* **Type**: `string[]`
+* **Required**: Yes
 
-Identifies which dimensions in the Zarr array correspond to spatial axes. This is particularly useful when arrays have multiple dimensions (e.g., time, bands, y, x).
+Identifies which dimensions in the Zarr array correspond to spatial axes. This is particularly useful when arrays have multiple dimensions (e.g., time, bands, y, x). The array must contain either 2 elements for 2D spatial data [y_name, x_name] or 3 elements for 3D spatial data [z_name, y_name, x_name].
 
 ## Examples
 
