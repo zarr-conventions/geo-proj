@@ -14,7 +14,10 @@
 This convention defines properties that encode datum and coordinate reference system (CRS) information for geospatial data. All properties use the `proj:` namespace prefix and are placed at the root `attributes` level following the [Zarr Conventions Specification v0.1.0](https://github.com/zarr-conventions/zarr-conventions-spec). This enables composability with other conventions such as multiscales.
 
 - Examples:
-    - [gdal-test-case](examples/zarr_convention_metadata.json)
+    - [EPSG:26711](examples/epsg26711.json)
+    - [EPSG:3857](examples/epsg3587.json)
+    - [wkt2](examples/wkt2.json)
+    - [composition with multiscales](examples/multiscales.json)
 
 ## Motivation
 
