@@ -265,7 +265,7 @@ In this example:
 - Each layout item has its own `proj:shape` and `proj:transform` specific to that resolution
 - This enables efficient storage of multi-resolution geospatial data with proper georeferencing at each level
 
-See [examples/easy.json](examples/easy.json) for a complete composability example.
+See [examples/multiscales.json](examples/multiscales.json) for a complete composability example.
 
 ## FAQ
 
