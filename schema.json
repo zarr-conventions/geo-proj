@@ -1,125 +1,142 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Template Convention Metadata",
-  "description": "Schema for Template Zarr convention metadata with fixed UUID and exact values",
+  "$id": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v0.1.0/schema.json",
+  "title": "Geospatial Projection Convention (proj:)",
+  "description": "Schema for geospatial coordinate reference system information in Zarr. Properties use the 'proj:' namespace prefix.",
   "type": "object",
   "properties": {
-    "f17cb550-5864-4468-aeb7-f3180cfb622f": {
+    "proj:code": {
+      "type": "string",
+      "description": "CRS authority:code identifier (e.g., EPSG:4326, EPSG:32633)",
+      "pattern": "^[A-Z]+:[0-9]+$"
+    },
+    "proj:wkt2": {
+      "type": "string",
+      "description": "WKT2 (ISO 19162:2019) CRS representation"
+    },
+    "proj:projjson": {
+      "$ref": "https://proj.org/schemas/v0.7/projjson.schema.json",
+      "description": "PROJJSON CRS representation following PROJ specification"
+    },
+    "proj:bbox": {
+      "type": "array",
+      "description": "Bounding box in CRS coordinates: [xmin, ymin, xmax, ymax] for 2D or [xmin, ymin, zmin, xmax, ymax, zmax] for 3D",
+      "oneOf": [
+        {
+          "minItems": 4,
+          "maxItems": 4
+        },
+        {
+          "minItems": 6,
+          "maxItems": 6
+        }
+      ],
+      "items": {
+        "type": "number"
+      }
+    },
+    "proj:transform": {
+      "type": "array",
+      "description": "Affine transformation coefficients for 2D ([a, b, c, d, e, f]) or 3D ([a, b, c, d, e, f, g, h, i]). For 2D: x' = ax + by + c, y' = dx + ey + f",
+      "oneOf": [
+        {
+          "minItems": 6,
+          "maxItems": 6,
+          "description": "2D affine transform: [a, b, c, d, e, f]"
+        },
+        {
+          "minItems": 9,
+          "maxItems": 9,
+          "description": "3D affine transform: [a, b, c, d, e, f, g, h, i]"
+        }
+      ],
+      "items": {
+        "type": "number"
+      }
+    },
+    "proj:shape": {
+      "type": "array",
+      "description": "Shape of spatial dimensions [height, width] corresponding to [y, x]",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "proj:spatial_dimensions": {
+      "type": "array",
+      "description": "Names of spatial dimensions [y_name, x_name] or [z_name, y_name, x_name]",
+      "oneOf": [
+        {
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "2D spatial dimensions"
+        },
+        {
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "3D spatial dimensions"
+        }
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "multiscales": {
       "type": "object",
-      "description": "geo:proj metadata object",
+      "description": "When composing with multiscales convention, proj: properties can be added to layout items",
       "properties": {
-        "version": {
-          "type": "string",
-          "const": "0.1.0",
-          "description": "Semantic version number of the convention"
-        },
-        "schema": {
-          "type": "string",
-          "const": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v0.1.0/schema.json",
-          "description": "URL to the JSON Schema definition for this convention"
-        },
-        "name": {
-          "type": "string",
-          "const": "geo:proj",
-          "description": "Human-readable name of the convention"
-        },
-        "description": {
-          "type": "string",
-          "const": "Template convention for demonstrating Zarr convention metadata structure",
-          "description": "Brief description of the convention's purpose and usage"
-        },
-        "spec": {
-          "type": "string",
-          "const": "https://github.com/zarr-experimental/geo-proj/blob/v0.1.0/README.md",
-          "description": "URL to the full specification document"
-        },
-        "configuration": {
-          "type": "object",
-          "description": "Convention-specific configuration parameters",
-          "properties": {
-            "code": {
-              "type": ["string", "null"],
-              "description": "Authority:code identifier (e.g., EPSG:4326)",
-              "pattern": "^[A-Z]+:[0-9]+$"
-            },
-            "wkt2": {
-              "type": ["string", "null"],
-              "description": "WKT2 (ISO 19162) CRS representation"
-            },
-            "projjson": {
-              "oneOf": [
-                {
-                  "$ref": "https://proj.org/schemas/v0.7/projjson.schema.json"
-                },
-                {
-                  "type": "null"
+        "layout": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "proj:shape": {
+                "type": "array",
+                "description": "Shape override for this resolution level [height, width]",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
                 }
-              ],
-              "description": "PROJJSON CRS representation"
-            },
-            "bbox": {
-              "type": ["array", "null"],
-              "oneOf": [
-                {
-                  "minItems": 4,
-                  "maxItems": 4
-                },
-                {
-                  "minItems": 6,
-                  "maxItems": 6
+              },
+              "proj:transform": {
+                "type": "array",
+                "description": "Transform override for this resolution level",
+                "oneOf": [
+                  {
+                    "minItems": 6,
+                    "maxItems": 6
+                  },
+                  {
+                    "minItems": 9,
+                    "maxItems": 9
+                  }
+                ],
+                "items": {
+                  "type": "number"
                 }
-              ],
-              "items": {
-                "type": "number"
-              },
-              "description": "Bounding box in CRS coordinates"
+              }
             },
-            "transform": {
-              "type": ["array", "null"],
-              "oneOf": [
-                {
-                  "minItems": 6,
-                  "maxItems": 6
-                },
-                {
-                  "minItems": 9,
-                  "maxItems": 9
-                }
-              ],
-              "items": {
-                "type": "number"
-              },
-              "description": "Affine transformation coefficients"
-            },
-            "spatial_dimensions": {
-              "type": ["array"],
-              "minItems": 2,
-              "maxItems": 2,
-              "items": {
-                "type": "string"
-              },
-              "description": "Names of spatial dimensions [y_name, x_name]"
-            }
-          },
-          "oneOf": [
-            {
-              "required": ["code"]
-            },
-            {
-              "required": ["wkt2"]
-            },
-            {
-              "required": ["projjson"]
-            }
-          ],
-          "required": ["spatial_dimensions"],
-          "additionalProperties": false
+            "additionalProperties": true
+          }
         }
       },
-      "required": ["version", "schema", "name", "description", "spec", "configuration"],
-      "additionalProperties": false
+      "additionalProperties": true
     }
   },
-  "required": ["f17cb550-5864-4468-aeb7-f3180cfb622f"],
+  "oneOf": [
+    {
+      "required": ["proj:code"]
+    },
+    {
+      "required": ["proj:wkt2"]
+    },
+    {
+      "required": ["proj:projjson"]
+    }
+  ],
   "additionalProperties": true
 }
