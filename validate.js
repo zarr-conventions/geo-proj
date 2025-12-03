@@ -14,9 +14,6 @@ if (!schemaPath || !dataPath) {
 const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
 const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
 
-// Extract attributes for validation (if the data is a Zarr metadata file)
-const dataToValidate = data.attributes || data;
-
 // Validate
 const ajv = new Ajv({ allErrors: true });
 
@@ -28,7 +25,7 @@ const externalSchema = await fetch(externalSchemaUrl).then(r => r.json());
 ajv.addSchema(externalSchema, externalSchemaUrl);
 
 const validate = ajv.compile(schema);
-const valid = validate(dataToValidate);
+const valid = validate(data);
 
 if (valid) {
   console.log('✅ Validation successful!');

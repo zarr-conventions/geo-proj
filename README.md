@@ -1,17 +1,17 @@
 # Geospatial Projection Attribute Extension for Zarr
 
 - **UUID**: f17cb550-5864-4468-aeb7-f3180cfb622f
-- **Name**: geo-proj
+- **Name**: proj:
 - **Namespace**: `proj:`
-- **Schema**: <https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v0.1.0/schema.json>
+- **Schema URL**: <https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json>
+- **Spec URL**: <https://github.com/zarr-experimental/geo-proj/blob/v1/README.md>
 - **Extension Maturity Classification**: Proposal
 - **Owner**: @emmanuelmathot, @maxrjones
-- **Version**: 0.1.0
 
 
 ## Description
 
-This convention defines properties that encode datum and coordinate reference system (CRS) information for geospatial data. All properties use the `proj:` namespace prefix and are placed at the root `attributes` level following the [Zarr Conventions Specification v0.1.0](https://github.com/zarr-conventions/zarr-conventions-spec). This enables composability with other conventions such as multiscales.
+This convention defines properties that encode datum and coordinate reference system (CRS) information for geospatial data. All properties use the `proj:` namespace prefix and are placed at the root `attributes` level following the [Zarr Conventions Specification](https://github.com/zarr-conventions/zarr-conventions-spec). This enables composability with other conventions such as multiscales.
 
 - Examples:
     - [EPSG:26711](examples/epsg26711.json)
@@ -42,16 +42,15 @@ The convention must be registered in `zarr_conventions`:
 
 ```json
 {
-  "zarr_conventions_version": "0.1.0",
-  "zarr_conventions": {
-    "f17cb550-5864-4468-aeb7-f3180cfb622f": {
-      "version": "0.1.0",
-      "schema": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v0.1.0/schema.json",
-      "name": "geo-proj",
-      "description": "Coordinate reference system information for geospatial data",
-      "spec": "https://github.com/zarr-experimental/geo-proj/blob/v0.1.0/README.md"
+  "zarr_conventions": [
+    {
+      "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
+      "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+      "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
+      "name": "proj:",
+      "description": "Coordinate reference system information for geospatial data"
     }
-  }
+  ]
 }
 ```
 
@@ -232,41 +231,56 @@ Example:
 
 ```json
 {
-  "zarr_conventions": {
-    "d35379db-88df-4056-af3a-620245f8e347": {
-      "version": "0.1.0",
-      "name": "multiscales"
+  "zarr_conventions": [
+    {
+      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/multiscales/refs/tags/v1/schema.json",
+      "spec_url": "https://github.com/zarr-conventions/multiscales/blob/v1/README.md",
+      "uuid": "d35379db-88df-4056-af3a-620245f8e347",
+      "name": "multiscales",
+      "description": "Multiscale layout of zarr datasets"
     },
-    "f17cb550-5864-4468-aeb7-f3180cfb622f": {
-      "version": "0.1.0",
-      "name": "geo-proj"
+    {
+      "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
+      "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+      "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
+      "name": "proj:",
+      "description": "Coordinate reference system information for geospatial data"
     }
-  },
+  ],
   "multiscales": {
     "layout": [
       {
-        "group": "r10m",
+        "asset": "r10m",
+        "transform": {
+          "scale": [1.0, 1.0],
+          "translation": [0.0, 0.0]
+        },
         "proj:shape": [1200, 1200],
         "proj:transform": [10.0, 0.0, 500000.0, 0.0, -10.0, 5000000.0]
       },
       {
-        "group": "r20m",
-        "from_group": "r10m",
-        "scale": [2.0, 2.0],
+        "asset": "r20m",
+        "derived_from": "r10m",
+        "transform": {
+          "scale": [2.0, 2.0],
+          "translation": [0.0, 0.0]
+        },
         "proj:shape": [600, 600],
         "proj:transform": [20.0, 0.0, 500000.0, 0.0, -20.0, 5000000.0]
       }
     ]
   },
   "proj:code": "EPSG:32633",
+  "proj:spatial_dimensions": ["Y", "X"],
   "proj:bbox": [500000.0, 4900000.0, 600000.0, 5000000.0]
 }
 ```
 
 In this example:
 
-- The group-level `proj:code` and `proj:bbox` apply to all resolution levels
+- The group-level `proj:code`, `proj:spatial_dimensions`, and `proj:bbox` apply to all resolution levels
 - Each layout item has its own `proj:shape` and `proj:transform` specific to that resolution
+- The multiscales convention defines the relative transformations between levels via the `transform` object
 - This enables efficient storage of multi-resolution geospatial data with proper georeferencing at each level
 
 See [examples/multiscales.json](examples/multiscales.json) for a complete composability example.
