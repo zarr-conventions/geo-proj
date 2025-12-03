@@ -224,7 +224,11 @@ See the following examples for different CRS specifications:
 
 ### Composability with Multiscales
 
-The proj: convention can extend multiscales layouts by adding projection-specific properties to individual resolution levels:
+The proj: convention can extend multiscales layouts by adding projection-specific properties to individual resolution levels.
+
+**Important:** When `proj:transform` is present at a resolution level, it represents the **complete affine transformation** for that level. The multiscales `scale` and `translation` properties are used for **array resampling relationships** between levels, not for geospatial coordinate transformations. `proj:transform` should be treated as the authoritative geospatial transformation, independent of the multiscales resampling parameters.
+
+Example:
 
 ```json
 {
