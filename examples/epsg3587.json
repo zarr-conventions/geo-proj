@@ -9,17 +9,24 @@
                 "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
                 "name": "proj:",
                 "description": "Coordinate reference system information for geospatial data"
+            },
+            {
+                "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+                "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+                "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+                "name": "spatial:",
+                "description": "Spatial coordinate information"
             }
         ],
         "proj:code": "EPSG:3857",
-        "proj:spatial_dimensions": ["Y", "X"],
-        "proj:bbox": [
+        "spatial:dimensions": ["Y", "X"],
+        "spatial:bbox": [
             -20037508.342789244,
             -20037508.342789244,
             20037508.342789244,
             20037508.342789244
         ],
-        "proj:transform": [
+        "spatial:transform": [
             156543.03392804097,
             0.0,
             -20037508.342789244,
