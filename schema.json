@@ -78,7 +78,7 @@
     },
     "projAttributes": {
       "type": "object",
-      "description": "Geospatial projection properties using proj: key prefix",
+      "description": "Geospatial projection properties using proj: key prefix. For spatial coordinate information (bbox, transform, shape, dimensions), compose with the spatial: convention.",
       "properties": {
         "zarr_conventions": true,
         "proj:code": {
@@ -93,117 +93,8 @@
         "proj:projjson": {
           "$ref": "https://proj.org/schemas/v0.7/projjson.schema.json",
           "description": "PROJJSON CRS representation following PROJ specification"
-        },
-        "proj:bbox": {
-          "type": "array",
-          "description": "Bounding box in CRS coordinates: [xmin, ymin, xmax, ymax] for 2D or [xmin, ymin, zmin, xmax, ymax, zmax] for 3D",
-          "oneOf": [
-            {
-              "minItems": 4,
-              "maxItems": 4
-            },
-            {
-              "minItems": 6,
-              "maxItems": 6
-            }
-          ],
-          "items": {
-            "type": "number"
-          }
-        },
-        "proj:transform": {
-          "type": "array",
-          "description": "Affine transformation coefficients for 2D ([a, b, c, d, e, f]) or 3D ([a, b, c, d, e, f, g, h, i]). For 2D: x' = ax + by + c, y' = dx + ey + f",
-          "oneOf": [
-            {
-              "minItems": 6,
-              "maxItems": 6,
-              "description": "2D affine transform: [a, b, c, d, e, f]"
-            },
-            {
-              "minItems": 9,
-              "maxItems": 9,
-              "description": "3D affine transform: [a, b, c, d, e, f, g, h, i]"
-            }
-          ],
-          "items": {
-            "type": "number"
-          }
-        },
-        "proj:shape": {
-          "type": "array",
-          "description": "Shape of spatial dimensions [height, width] corresponding to [y, x]",
-          "minItems": 2,
-          "maxItems": 2,
-          "items": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        "proj:spatial_dimensions": {
-          "type": "array",
-          "description": "Names of spatial dimensions [y_name, x_name] or [z_name, y_name, x_name]",
-          "oneOf": [
-            {
-              "minItems": 2,
-              "maxItems": 2,
-              "description": "2D spatial dimensions"
-            },
-            {
-              "minItems": 3,
-              "maxItems": 3,
-              "description": "3D spatial dimensions"
-            }
-          ],
-          "items": {
-            "type": "string"
-          }
-        },
-        "multiscales": {
-          "type": "object",
-          "description": "When composing with multiscales convention, proj: properties can be added to layout items",
-          "properties": {
-            "layout": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "proj:shape": {
-                    "type": "array",
-                    "description": "Shape override for this resolution level [height, width]",
-                    "minItems": 2,
-                    "maxItems": 2,
-                    "items": {
-                      "type": "integer",
-                      "minimum": 1
-                    }
-                  },
-                  "proj:transform": {
-                    "type": "array",
-                    "description": "Transform override for this resolution level",
-                    "oneOf": [
-                      {
-                        "minItems": 6,
-                        "maxItems": 6
-                      },
-                      {
-                        "minItems": 9,
-                        "maxItems": 9
-                      }
-                    ],
-                    "items": {
-                      "type": "number"
-                    }
-                  }
-                },
-                "additionalProperties": true
-              }
-            }
-          },
-          "additionalProperties": true
         }
       },
-      "required": ["proj:spatial_dimensions"],
       "oneOf": [
         {
           "required": ["proj:code"]
